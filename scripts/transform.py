@@ -2,7 +2,7 @@ from scripts.db import db_engine
 import pandas as pd
 
 
-def transform_and_save_weather_data():
+def transform_and_save_to_db():
     try:
         # Get database engine
         engine = db_engine()

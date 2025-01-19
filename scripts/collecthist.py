@@ -3,6 +3,7 @@ import openmeteo_requests
 import requests_cache
 import pandas as pd
 from retry_requests import retry
+from datetime import datetime, timedelta
 
 # Setup the Open-Meteo API client
 def setup_openmeteo_client():
@@ -10,7 +11,15 @@ def setup_openmeteo_client():
     retry_session = retry(cache_session, retries=5, backoff_factor=0.2)
     return openmeteo_requests.Client(session=retry_session)
 
-def fetch_weather_data(start_date, end_date):
+def fetch_data(start_date):
+    start_date_obj = datetime.strptime(start_date, "%Y-%m-%d")
+
+    # Calculate the end of the month
+    next_month = start_date_obj.replace(day=28) + timedelta(days=4)
+    end_date_obj = next_month.replace(day=1) - timedelta(days=1)
+
+    # Format the end_date as a string
+    end_date = end_date_obj.strftime("%Y-%m-%d")
     client = setup_openmeteo_client()
     url = "https://archive-api.open-meteo.com/v1/archive"
     params = {
@@ -27,7 +36,8 @@ def fetch_weather_data(start_date, end_date):
     return client.weather_api(url, params=params)
 
 # Process the API response into a DataFrame
-def process_weather_data(response):
+def process_data(responses):
+    response = responses[0]
     hourly = response.Hourly()
     hourly_data = {
         "date": pd.date_range(
@@ -56,3 +66,16 @@ def save_data(data, file_path):
         print(f"File already exists: {file_path}")
 
 
+def collect(start_date, file_path):
+    try:
+        # Step 1: Fetch data
+        response = fetch_data(start_date)
+
+        # Step 2: Process data
+        weather_data = process_data(response)
+
+        # Step 3: Save data to file
+        save_data(weather_data, file_path)
+        print(f"Data saved to {file_path}")
+    except Exception as e:
+        print(f"Error in collecting or saving weather data: {e}")

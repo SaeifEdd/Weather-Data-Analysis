@@ -1,7 +1,7 @@
 import pandas as pd
 import os
 
-def clean_weather_data(input_file, output_file):
+def clean_data(input_file, output_file):
 
     # Read the raw data
     df = pd.read_csv(input_file)

@@ -7,38 +7,42 @@ def transform_and_save_to_db():
         # Get database engine
         engine = db_engine()
 
-        # Define the transformation query
-        query = (
-            "WITH daily_agg AS ("
-            "SELECT "
-            "day,"
-            "SUM(precipitation) as daily_precip,"
-            "AVG(temperature_2m) as daily_avg_temp,"
-            "AVG(relative_humidity_2m) as daily_avg_humid,"
-            "AVG(wind_speed_10m) as daily_avg_wspeed "
-            "FROM "
-            "weather_data "
-            "GROUP BY "
-            "day), "
-            "temp_diff AS ("
-            "SELECT *,"
-            "daily_avg_temp - LAG(daily_avg_temp) OVER (ORDER BY day) as temp_diff_prev_day "
-            "FROM "
-            "daily_agg) "
-            "SELECT "
-            "wd.*, "
-            "d.daily_avg_temp, "
-            "d.daily_avg_humid, "
-            "d.daily_avg_wspeed, "
-            "d.daily_precip, "
-            "d.temp_diff_prev_day "
-            "FROM "
-            "weather_data wd "
-            "JOIN "
-            "temp_diff d "
-            "ON "
-            "wd.day = d.day;"
-        )
+        query = """
+                -- Step 1: Aggregate daily weather data
+                WITH daily_agg AS (
+                    SELECT 
+                        day,
+                        SUM(precipitation) as daily_precip,
+                        AVG(temperature_2m) as daily_avg_temp,
+                        AVG(relative_humidity_2m) as daily_avg_humid,
+                        AVG(wind_speed_10m) as daily_avg_wspeed
+                    FROM 
+                        weather_data
+                    GROUP BY 
+                        day
+                ),
+                -- Step 2: Calculate temperature difference from the previous day
+                temp_diff AS (
+                    SELECT *,
+                        daily_avg_temp - LAG(daily_avg_temp) OVER (ORDER BY day) as temp_diff_prev_day
+                    FROM 
+                        daily_agg
+                )
+                -- Step 3: Join transformed data with the original data
+                SELECT 
+                    wd.*, 
+                    d.daily_avg_temp, 
+                    d.daily_avg_humid, 
+                    d.daily_avg_wspeed, 
+                    d.daily_precip, 
+                    d.temp_diff_prev_day
+                FROM 
+                    weather_data wd
+                JOIN 
+                    temp_diff d
+                ON 
+                    wd.day = d.day;
+                """
 
         # Execute the query to get the data
         df = pd.read_sql(query, engine)

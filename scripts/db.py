@@ -5,7 +5,7 @@ import pandas as pd
 import os
 
 # get configurations
-def config(filename="db.ini", section="postgresql"):
+def config(filename="scripts/db.ini", section="postgresql"):
     parser = ConfigParser()
     #read file
     parser.read(filename)
@@ -26,7 +26,7 @@ def db_engine():
     host = db_params["host"]
     port = db_params["port"]
     database = db_params["dbname"]
-    return create_engine(f"postgresql+psycopg://{user}:{password}@{host}:{port}/{database}")
+    return create_engine(f"postgresql+psycopg2://{user}:{password}@{host}:{port}/{database}")
 
 
 # Function to load and save cleaned data into the PostgreSQL database

@@ -6,3 +6,5 @@ airflow.cfg
 standalone_admin_password.txt
 test.py
 webserver_config.py
+scripts/db.ini
+
